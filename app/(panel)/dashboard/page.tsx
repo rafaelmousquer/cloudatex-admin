@@ -1,23 +1,41 @@
 import { prisma } from "@/lib/prisma";
-import { Client } from "@prisma/client";
 
-function getStatus(client: Client) {
+type ClientRow = {
+  id: string;
+  name: string;
+  email: string | null;
+  plan: string;
+  monthlyValue: number;
+  includedGb: number;
+  extraPricePerGb: number;
+  status: string;
+  machineName: string | null;
+  backupName: string | null;
+  lastBackupAt: Date | null;
+  lastBackupError: string | null;
+  storageUsedBytes: bigint;
+  createdAt: Date;
+};
+
+function getStatus(client: ClientRow) {
   if (client.status === "error") return "error";
-
+  if (client.status === "warning") return "warning";
+  if (client.status === "unknown") return "unknown";
   if (!client.lastBackupAt) return "offline";
 
   const last = new Date(client.lastBackupAt);
   const now = new Date();
+  const diffHours = (now.getTime() - last.getTime()) / (1000 * 60 * 60);
 
-  const diff = (now.getTime() - last.getTime()) / (1000 * 60 * 60);
-
-  if (diff > 24) return "offline";
+  if (diffHours > 24) return "offline";
 
   return "ok";
 }
 
 export default async function DashboardPage() {
-  const clients = await prisma.client.findMany();
+  const clients = (await prisma.client.findMany({
+    orderBy: { createdAt: "desc" },
+  })) as ClientRow[];
 
   const total = clients.length;
   const active = clients.filter((c) => getStatus(c) === "ok").length;
@@ -25,40 +43,70 @@ export default async function DashboardPage() {
   const error = clients.filter((c) => getStatus(c) === "error").length;
 
   const mrr = clients.reduce((acc, client) => {
-    return acc + client.monthlyValue;
+    return acc + Number(client.monthlyValue || 0);
   }, 0);
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-white">Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-          <p className="text-gray-400 text-sm">Clientes</p>
-          <h2 className="text-3xl text-white font-bold">{total}</h2>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <p className="text-sm text-zinc-400">Clientes</p>
+          <h2 className="mt-2 text-4xl font-bold text-white">{total}</h2>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-          <p className="text-gray-400 text-sm">Ativos</p>
-          <h2 className="text-3xl text-green-400 font-bold">{active}</h2>
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <p className="text-sm text-zinc-400">Ativos</p>
+          <h2 className="mt-2 text-4xl font-bold text-green-400">{active}</h2>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-          <p className="text-gray-400 text-sm">Offline</p>
-          <h2 className="text-3xl text-yellow-400 font-bold">{offline}</h2>
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <p className="text-sm text-zinc-400">Offline</p>
+          <h2 className="mt-2 text-4xl font-bold text-yellow-400">{offline}</h2>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-          <p className="text-gray-400 text-sm">Erro</p>
-          <h2 className="text-3xl text-red-400 font-bold">{error}</h2>
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <p className="text-sm text-zinc-400">Erro</p>
+          <h2 className="mt-2 text-4xl font-bold text-red-400">{error}</h2>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl">
-          <p className="text-gray-400 text-sm">MRR</p>
-          <h2 className="text-3xl text-blue-400 font-bold">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <p className="text-sm text-zinc-400">MRR</p>
+          <h2 className="mt-2 text-4xl font-bold text-blue-400">
             R$ {mrr.toFixed(2)}
           </h2>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <h3 className="text-lg font-semibold text-white">Clientes recentes</h3>
+
+        {clients.length === 0 ? (
+          <p className="mt-4 text-zinc-400">Nenhum cliente cadastrado.</p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {clients.slice(0, 5).map((client) => (
+              <div
+                key={client.id}
+                className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3"
+              >
+                <div>
+                  <p className="font-medium text-white">{client.name}</p>
+                  <p className="text-sm text-zinc-400">
+                    {client.plan} • R$ {Number(client.monthlyValue).toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="text-sm text-zinc-400">
+                  {client.lastBackupAt
+                    ? new Date(client.lastBackupAt).toLocaleString("pt-BR")
+                    : "Sem backup"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

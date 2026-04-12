@@ -1,138 +1,138 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { Client } from "@prisma/client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export default function NewClientPage() {
-  const router = useRouter();
+type StatusType = {
+  label: string;
+  class: string;
+};
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [plan, setPlan] = useState("basic");
-  const [monthlyValue, setMonthlyValue] = useState("30");
-  const [includedGb, setIncludedGb] = useState("5");
-  const [extraPricePerGb, setExtraPricePerGb] = useState("2");
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const res = await fetch("/api/clients", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        plan,
-        monthlyValue,
-        includedGb,
-        extraPricePerGb,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("ERRO AO CADASTRAR:", data);
-      alert(data.details || data.error || "Erro ao cadastrar cliente");
-      return;
-    }
-
-    router.push("/clients");
-    router.refresh();
+function getStatus(client: Client): StatusType {
+  if (client.status === "error") {
+    return {
+      label: "Erro",
+      class: "bg-red-500/20 text-red-400",
+    };
   }
 
+  if (client.status === "warning") {
+    return {
+      label: "Warning",
+      class: "bg-yellow-500/20 text-yellow-400",
+    };
+  }
+
+  if (client.status === "unknown") {
+    return {
+      label: "Desconhecido",
+      class: "bg-gray-500/20 text-gray-400",
+    };
+  }
+
+  if (!client.lastBackupAt) {
+    return {
+      label: "Sem backup",
+      class: "bg-gray-500/20 text-gray-400",
+    };
+  }
+
+  const lastBackup = new Date(client.lastBackupAt);
+  const now = new Date();
+  const diffHours = (now.getTime() - lastBackup.getTime()) / (1000 * 60 * 60);
+
+  if (diffHours > 24) {
+    return {
+      label: "Offline",
+      class: "bg-orange-500/20 text-orange-400",
+    };
+  }
+
+  return {
+    label: "OK",
+    class: "bg-green-500/20 text-green-400",
+  };
+}
+
+export default async function ClientsPage() {
+  const clients = await prisma.client.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-3xl font-bold text-white mb-6">Novo Cliente</h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-white">Clientes</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-          <div>
-            <label className="block text-sm text-zinc-400 mb-2">Nome</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-              placeholder="Ex: Mercado Silva"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-zinc-400 mb-2">Email</label>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-              placeholder="Ex: contato@cliente.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-zinc-400 mb-2">Plano</label>
-            <select
-              value={plan}
-              onChange={(e) => setPlan(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-            >
-              <option value="basic">Basic</option>
-              <option value="pro">Pro</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Cobrança</h2>
-
-          <div>
-            <label className="block text-sm text-zinc-400 mb-2">
-              Valor mensal base (R$)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={monthlyValue}
-              onChange={(e) => setMonthlyValue(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-zinc-400 mb-2">
-              GB incluído
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              value={includedGb}
-              onChange={(e) => setIncludedGb(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-zinc-400 mb-2">
-              Preço por GB extra (R$)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={extraPricePerGb}
-              onChange={(e) => setExtraPricePerGb(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          className="rounded-xl bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
+        <Link
+          href="/clients/new"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
         >
-          Cadastrar cliente
-        </button>
-      </form>
+          + Novo Cliente
+        </Link>
+      </div>
+
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+        {clients.length === 0 ? (
+          <div className="p-6 text-gray-400">Nenhum cliente cadastrado.</div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-zinc-800 text-gray-400 text-sm">
+              <tr>
+                <th className="p-4 text-left">Nome</th>
+                <th className="p-4 text-left">Plano</th>
+                <th className="p-4 text-left">Mensalidade</th>
+                <th className="p-4 text-left">Status</th>
+                <th className="p-4 text-left">Último backup</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {clients.map((client) => {
+                const status = getStatus(client);
+
+                return (
+                  <tr
+                    key={client.id}
+                    className="border-t border-zinc-800 hover:bg-zinc-800/50"
+                  >
+                    <td className="p-4 text-white">
+                      <Link
+                        href={`/clients/${client.id}`}
+                        className="hover:underline"
+                      >
+                        {client.name}
+                      </Link>
+                    </td>
+
+                    <td className="p-4 text-blue-400 capitalize">
+                      {client.plan}
+                    </td>
+
+                    <td className="p-4 text-zinc-300">
+                      R$ {client.monthlyValue.toFixed(2)}
+                    </td>
+
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded text-xs ${status.class}`}>
+                        {status.label}
+                      </span>
+                    </td>
+
+                    <td className="p-4 text-gray-300">
+                      {client.lastBackupAt
+                        ? new Date(client.lastBackupAt).toLocaleString("pt-BR")
+                        : "-"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

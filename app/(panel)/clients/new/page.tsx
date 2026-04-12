@@ -13,33 +13,35 @@ export default function NewClientPage() {
   const [includedGb, setIncludedGb] = useState("5");
   const [extraPricePerGb, setExtraPricePerGb] = useState("2");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
 
-    const res = await fetch("/api/clients", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        plan,
-        monthlyValue,
-        includedGb,
-        extraPricePerGb,
-      }),
-    });
+  const res = await fetch("/api/clients", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name,
+      email,
+      plan,
+      monthlyValue,
+      includedGb,
+      extraPricePerGb,
+    }),
+  });
 
-    if (!res.ok) {
-      alert("Erro ao criar cliente");
-      return;
-    }
+  const data = await res.json();
 
-    router.push("/clients");
-    router.refresh();
+  if (!res.ok) {
+    console.error("ERRO AO CADASTRAR:", data);
+    alert(data.details || data.error || "Erro ao cadastrar cliente");
+    return;
   }
 
+  router.push("/clients");
+  router.refresh();
+}
   return (
     <div className="max-w-2xl">
       <h1 className="text-3xl font-bold text-white mb-6">Novo Cliente</h1>

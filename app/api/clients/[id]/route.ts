@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -6,6 +6,16 @@ type RouteContext = {
     id: string;
   }>;
 };
+
+function serializeClient(client: any) {
+  return {
+    ...client,
+    storageUsedBytes:
+      typeof client.storageUsedBytes === "bigint"
+        ? client.storageUsedBytes.toString()
+        : client.storageUsedBytes ?? "0",
+  };
+}
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   try {
@@ -16,24 +26,21 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     });
 
     if (!client) {
-      return NextResponse.json(
+      return Response.json(
         { error: "Cliente não encontrado" },
         { status: 404 }
       );
     }
 
-    // 🔥 CORREÇÃO DO BIGINT
-    const safeClient = JSON.parse(
-      JSON.stringify(client, (_, value) =>
-        typeof value === "bigint" ? value.toString() : value
-      )
-    );
-
-    return NextResponse.json(safeClient);
+    return Response.json(serializeClient(client));
   } catch (error) {
     console.error("ERRO GET CLIENT:", error);
-    return NextResponse.json(
-      { error: "Erro ao buscar cliente", details: String(error) },
+
+    return Response.json(
+      {
+        error: "Erro ao buscar cliente",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
@@ -57,11 +64,15 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       },
     });
 
-    return NextResponse.json(client);
+    return Response.json(serializeClient(client));
   } catch (error) {
     console.error("ERRO PUT CLIENT:", error);
-    return NextResponse.json(
-      { error: "Erro ao atualizar cliente", details: String(error) },
+
+    return Response.json(
+      {
+        error: "Erro ao atualizar cliente",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
@@ -75,11 +86,15 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
       where: { id },
     });
 
-    return NextResponse.json({ ok: true });
+    return Response.json({ ok: true });
   } catch (error) {
     console.error("ERRO DELETE CLIENT:", error);
-    return NextResponse.json(
-      { error: "Erro ao deletar cliente", details: String(error) },
+
+    return Response.json(
+      {
+        error: "Erro ao deletar cliente",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

@@ -9,26 +9,18 @@ datasource db {
 }
 
 model Client {
-  id                String   @id @default(cuid())
-  name              String
-  email             String?
-
-  plan              String   @default("basic")
-  monthlyValue      Float    @default(30)
-
-  includedGb        Float    @default(5)
-  extraPricePerGb   Float    @default(2)
-
-  status            String   @default("unknown")
-
-  machineName       String?
-  backupName        String?
-
-  lastBackupAt      DateTime?
-  lastBackupError   String?
-
-  storageUsedBytes  BigInt   @default(0)
-  lastStorageUpdate DateTime?
-
-  createdAt         DateTime @default(now())
+  id              String   @id @default(cuid())
+  name            String
+  email           String?  @unique
+  password        String?
+  plan            String   @default("basic")
+  monthlyValue    Float    @default(30)
+  includedGb      Float    @default(5)
+  extraPricePerGb Float    @default(2)
+  status          String   @default("unknown")
+  machineName     String?
+  backupName      String?
+  lastBackupAt    DateTime?
+  lastBackupError String?
+  createdAt       DateTime @default(now())
 }

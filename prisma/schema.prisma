@@ -3,24 +3,29 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Client {
-  id              String   @id @default(cuid())
-  name            String
-  email           String?  @unique
-  password        String?
-  plan            String   @default("basic")
-  monthlyValue    Float    @default(30)
-  includedGb      Float    @default(5)
-  extraPricePerGb Float    @default(2)
-  status          String   @default("unknown")
-  machineName     String?
-  backupName      String?
-  lastBackupAt    DateTime?
-  lastBackupError String?
-  createdAt       DateTime @default(now())
+  id                String   @id @default(cuid())
+  name              String
+  email             String?  @unique
+  password          String?
+  role              String   @default("client") // 🔥 admin ou client
+
+  plan              String   @default("basic")
+  monthlyValue      Float    @default(30)
+  includedGb        Float    @default(5)
+  extraPricePerGb   Float    @default(2)
+
+  status            String   @default("unknown")
+
+  machineName       String?
+  backupName        String?
+
+  lastBackupAt      DateTime?
+  lastBackupError   String?
+
+  createdAt         DateTime @default(now())
 }

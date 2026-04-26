@@ -7,7 +7,51 @@ function pickFirstString(...values: unknown[]): string | null {
       return value.trim();
     }
   }
+
   return null;
+}
+
+function pickFirstNumber(...values: unknown[]): number {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === "string" && value.trim() !== "") {
+      const parsed = Number(value);
+
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return 0;
+}
+
+function getStorageUsedBytes(body: any): bigint {
+  const bytes = pickFirstNumber(
+    body?.Data?.BackendStatistics?.KnownFileSize,
+    body?.data?.BackendStatistics?.KnownFileSize,
+    body?.BackendStatistics?.KnownFileSize,
+    body?.backendStatistics?.KnownFileSize,
+    body?.Data?.SizeOfExaminedFiles,
+    body?.data?.SizeOfExaminedFiles,
+    body?.SizeOfExaminedFiles,
+    body?.sizeOfExaminedFiles
+  );
+
+  return BigInt(Math.max(0, Math.floor(bytes)));
+}
+
+function safeClient(client: any) {
+  return {
+    ...client,
+    storageUsedBytes:
+      typeof client?.storageUsedBytes === "bigint"
+        ? client.storageUsedBytes.toString()
+        : client?.storageUsedBytes,
+  };
 }
 
 function extractErrorMessage(body: any, rawText: string): string | null {
@@ -43,25 +87,34 @@ function extractErrorMessage(body: any, rawText: string): string | null {
   return null;
 }
 
-function detectStatus(body: any, rawText: string): "ok" | "warning" | "error" | "unknown" {
+function detectStatus(
+  body: any,
+  rawText: string
+): "ok" | "warning" | "error" | "unknown" {
   const parsedResult = pickFirstString(
     body?.ParsedResult,
     body?.parsedResult,
     body?.PARSEDRESULT,
     body?.MainOperation,
-    body?.mainOperation
+    body?.mainOperation,
+    body?.Data?.ParsedResult,
+    body?.data?.ParsedResult
   );
 
   const errorsActualLength =
     body?.ErrorsActualLength ??
     body?.errorsActualLength ??
     body?.BackendStatistics?.ErrorsActualLength ??
+    body?.Data?.ErrorsActualLength ??
+    body?.Data?.BackendStatistics?.ErrorsActualLength ??
     0;
 
   const warningsActualLength =
     body?.WarningsActualLength ??
     body?.warningsActualLength ??
     body?.BackendStatistics?.WarningsActualLength ??
+    body?.Data?.WarningsActualLength ??
+    body?.Data?.BackendStatistics?.WarningsActualLength ??
     0;
 
   const logLines = Array.isArray(body?.Extra?.LogLines)
@@ -144,11 +197,14 @@ export async function POST(req: Request) {
       body?.Time,
       body?.time,
       body?.timestamp,
-      body?.Timestamp
+      body?.Timestamp,
+      body?.Data?.EndTime,
+      body?.data?.EndTime
     );
 
     const normalizedStatus = detectStatus(body, rawText);
     const cleanErrorMessage = extractErrorMessage(body, rawText);
+    const storageUsedBytes = getStorageUsedBytes(body);
 
     const clientName =
       backupName ||
@@ -170,8 +226,10 @@ export async function POST(req: Request) {
           status: normalizedStatus,
           machineName: machineName || null,
           backupName: backupName || null,
+          storageUsedBytes,
           lastBackupAt: timestampRaw ? new Date(timestampRaw) : new Date(),
-          lastBackupError: normalizedStatus === "error" ? cleanErrorMessage : null,
+          lastBackupError:
+            normalizedStatus === "error" ? cleanErrorMessage : null,
         },
       });
     } else {
@@ -181,8 +239,10 @@ export async function POST(req: Request) {
           status: normalizedStatus,
           machineName: machineName || null,
           backupName: backupName || null,
+          storageUsedBytes,
           lastBackupAt: timestampRaw ? new Date(timestampRaw) : new Date(),
-          lastBackupError: normalizedStatus === "error" ? cleanErrorMessage : null,
+          lastBackupError:
+            normalizedStatus === "error" ? cleanErrorMessage : null,
         },
       });
     }
@@ -192,13 +252,18 @@ export async function POST(req: Request) {
       clientName,
       normalizedStatus,
       cleanErrorMessage,
-      client,
+      storageUsedBytes: storageUsedBytes.toString(),
+      storageUsedGb: Number(storageUsedBytes) / 1024 / 1024 / 1024,
+      client: safeClient(client),
     });
   } catch (error) {
     console.error("ERRO DUPLICATI:", error);
 
     return NextResponse.json(
-      { error: "Erro interno", details: String(error) },
+      {
+        error: "Erro interno",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

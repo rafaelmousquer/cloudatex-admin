@@ -9,15 +9,20 @@ datasource db {
 
 model Client {
   id                String   @id @default(cuid())
+
   name              String
   email             String?  @unique
   password          String?
-  role              String   @default("client") // 🔥 admin ou client
+
+  role              String   @default("client") // admin ou client
 
   plan              String   @default("basic")
   monthlyValue      Float    @default(30)
   includedGb        Float    @default(5)
   extraPricePerGb   Float    @default(2)
+
+  // 🔥 USO DE ARMAZENAMENTO
+  storageUsedBytes  BigInt   @default(0)
 
   status            String   @default("unknown")
 

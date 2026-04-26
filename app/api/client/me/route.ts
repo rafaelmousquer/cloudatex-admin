@@ -1,26 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
+export async function GET() {
+  const cookieStore = await cookies();
+  const id = cookieStore.get("user_id")?.value;
+  const role = cookieStore.get("user_role")?.value;
 
-  if (!id) {
-    return NextResponse.json({ error: "Sem ID" }, { status: 400 });
+  if (!id || role !== "client") {
+    return NextResponse.json({}, { status: 401 });
   }
 
   const client = await prisma.client.findUnique({
     where: { id },
   });
 
-  if (!client) {
-    return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
-  }
-
-  return NextResponse.json({
-    status: client.status,
-    lastBackupAt: client.lastBackupAt,
-    lastBackupError: client.lastBackupError,
-    machineName: client.machineName,
-  });
+  return NextResponse.json(client);
 }

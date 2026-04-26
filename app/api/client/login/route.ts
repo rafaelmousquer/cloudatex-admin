@@ -28,18 +28,24 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       message: "Login OK",
+      client: {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+      },
     });
 
-    // 🔥 AQUI ESTÁ A CHAVE
     response.cookies.set("client_id", client.id, {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
     });
 
     return response;
-
   } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
       { error: "Erro no login" },
       { status: 500 }

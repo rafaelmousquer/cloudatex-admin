@@ -28,7 +28,9 @@ function getStatus(client: ClientRow) {
 
   const last = new Date(client.lastBackupAt);
   const now = new Date();
-  const diffHours = (now.getTime() - last.getTime()) / (1000 * 60 * 60);
+
+  const diffHours =
+    (now.getTime() - last.getTime()) / (1000 * 60 * 60);
 
   if (diffHours > 24) return "offline";
 
@@ -36,12 +38,11 @@ function getStatus(client: ClientRow) {
 }
 
 export default async function DashboardPage() {
-  // 🔒 PROTEÇÃO AQUI DENTRO
   const cookieStore = await cookies();
-  const role = cookieStore.get("user_role")?.value;
+  const isAdmin = cookieStore.get("admin_auth")?.value;
 
-  if (role !== "admin") {
-    redirect("/login");
+  if (isAdmin !== "true") {
+    redirect("/admin/login");
   }
 
   const clients = await prisma.client.findMany({
@@ -59,7 +60,15 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+
+        <form action="/api/admin/logout" method="POST">
+          <button className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700">
+            Sair
+          </button>
+        </form>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">

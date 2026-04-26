@@ -1,19 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
-export default function ClientLoginPage() {
-  const router = useRouter();
-
-  const [email, setEmail] = useState("rafael@teste.com");
+export default function AdminLoginPage() {
+  const [email, setEmail] = useState("admin@cloudatex.com");
   const [password, setPassword] = useState("123456");
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
     setLoading(true);
 
-    const res = await fetch("/api/client/login", {
+    const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,24 +26,18 @@ export default function ClientLoginPage() {
       return;
     }
 
-    router.push("/client/dashboard");
+    window.location.href = "/dashboard";
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg">
         <h1 className="mb-2 text-center text-2xl font-bold text-black">
-          Área do Cliente
+          Admin Cloudatex
         </h1>
-
-        <p className="mb-6 text-center text-sm text-gray-500">
-          Acesse o painel do seu backup
-        </p>
 
         <div className="flex flex-col gap-3">
           <input
-            type="email"
-            placeholder="Email"
             className="rounded-lg border px-3 py-2 text-black"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -54,7 +45,6 @@ export default function ClientLoginPage() {
 
           <input
             type="password"
-            placeholder="Senha"
             className="rounded-lg border px-3 py-2 text-black"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -63,7 +53,7 @@ export default function ClientLoginPage() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="rounded-lg bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-lg bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>

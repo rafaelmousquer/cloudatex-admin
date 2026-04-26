@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 export const revalidate = 0;
 
 function getStatus(client: any) {
+  if (client.status === "error") return "error";
+  if (client.status === "warning") return "warning";
   if (!client.lastBackupAt) return "offline";
 
   const diff =
@@ -17,17 +19,9 @@ function getStatus(client: any) {
 }
 
 export default async function ClientDashboardPage() {
-  // 🔒 TUDO AQUI DENTRO
   const cookieStore = await cookies();
-  const role = cookieStore.get("user_role")?.value;
   const clientId = cookieStore.get("client_id")?.value;
 
-  // 🔒 protege role
-  if (role !== "client") {
-    redirect("/login");
-  }
-
-  // 🔒 protege sessão
   if (!clientId) {
     redirect("/client/login");
   }
@@ -42,9 +36,8 @@ export default async function ClientDashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-6 text-white">
-      <div className="max-w-xl mx-auto bg-slate-900 rounded-2xl p-6 shadow-lg">
-
-        <h1 className="text-2xl font-bold mb-4">Seu Backup</h1>
+      <div className="mx-auto max-w-xl rounded-2xl bg-slate-900 p-6 shadow-lg">
+        <h1 className="mb-4 text-2xl font-bold">Seu Backup</h1>
 
         <p className="mb-2">
           <strong>Status:</strong>{" "}
@@ -58,13 +51,11 @@ export default async function ClientDashboardPage() {
             : "Sem backup"}
         </p>
 
-        {/* 🚪 LOGOUT */}
         <form action="/api/client/logout" method="POST">
           <button className="mt-4 w-full rounded-lg bg-red-600 py-2 font-semibold text-white hover:bg-red-700">
             Sair
           </button>
         </form>
-
       </div>
     </div>
   );

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const response = NextResponse.redirect("http://localhost:3000/client/login");
+  const response = NextResponse.redirect("http://localhost:3000/admin/login");
 
-  response.cookies.set("client_id", "", {
+  response.cookies.set("admin_auth", "", {
     httpOnly: true,
     path: "/",
     expires: new Date(0),

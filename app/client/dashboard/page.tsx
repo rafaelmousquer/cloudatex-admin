@@ -1,36 +1,63 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useEffect, useState } from "react";
+export const revalidate = 0;
 
-export default function Dashboard() {
-  const [data, setData] = useState<any>(null);
+function getStatus(client: any) {
+  if (!client.lastBackupAt) return "offline";
 
-  useEffect(() => {
-    const client = JSON.parse(localStorage.getItem("client") || "{}");
+  const diff =
+    (new Date().getTime() - new Date(client.lastBackupAt).getTime()) /
+    (1000 * 60 * 60);
 
-    fetch(`/api/client/me?id=${client.id}`)
-      .then(res => res.json())
-      .then(setData);
-  }, []);
+  if (diff > 24) return "offline";
 
-  if (!data) return <p>Carregando...</p>;
+  return "ok";
+}
+
+export default async function ClientDashboardPage() {
+  const cookieStore = await cookies();
+  const clientId = cookieStore.get("client_id")?.value;
+
+  // 🔒 protege rota
+  if (!clientId) {
+    redirect("/client/login");
+  }
+
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+  });
+
+  if (!client) {
+    redirect("/client/login");
+  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold">Seu Backup</h1>
+    <div className="min-h-screen bg-slate-950 p-6 text-white">
+      <div className="max-w-xl mx-auto bg-slate-900 rounded-2xl p-6 shadow-lg">
 
-      <div className="mt-4 p-4 bg-gray-100 rounded">
-        <p>Status: 
-          <span className={data.status === "ok" ? "text-green-600" : "text-red-600"}>
-            {data.status}
-          </span>
+        <h1 className="text-2xl font-bold mb-4">Seu Backup</h1>
+
+        <p className="mb-2">
+          <strong>Status:</strong>{" "}
+          <span className="capitalize">{getStatus(client)}</span>
         </p>
 
-        <p>Último backup: {new Date(data.lastBackupAt).toLocaleString()}</p>
+        <p className="mb-4">
+          <strong>Último backup:</strong>{" "}
+          {client.lastBackupAt
+            ? new Date(client.lastBackupAt).toLocaleString("pt-BR")
+            : "Sem backup"}
+        </p>
 
-        {data.lastBackupError && (
-          <p className="text-red-500">Erro: {data.lastBackupError}</p>
-        )}
+        {/* 🚪 BOTÃO DE LOGOUT */}
+        <form action="/api/client/logout" method="POST">
+          <button className="mt-4 w-full rounded-lg bg-red-600 py-2 font-semibold text-white hover:bg-red-700">
+            Sair
+          </button>
+        </form>
+
       </div>
     </div>
   );

@@ -2,45 +2,40 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-export async function POST(req: Request) {
+export async function GET() {
   try {
-    const { email, password } = await req.json();
+    const email = "COLOCA_AQUI_O_EMAIL_REAL"; // 👈 MUITO IMPORTANTE
+    const plainPassword = "123456";
 
-    // 🔍 busca cliente
     const client = await prisma.client.findUnique({
       where: { email },
     });
 
-    if (!client || !client.password) {
-      return NextResponse.json(
-        { error: "Credenciais inválidas" },
-        { status: 401 }
-      );
+    if (!client) {
+      return NextResponse.json({
+        error: "Cliente não encontrado",
+      });
     }
 
-    // 🔐 compara senha
-    const isValid = await bcrypt.compare(password, client.password);
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    if (!isValid) {
-      return NextResponse.json(
-        { error: "Credenciais inválidas" },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.json({
-      message: "Login OK",
-      client: {
-        id: client.id,
-        name: client.name,
-        email: client.email,
+    await prisma.client.update({
+      where: { email },
+      data: {
+        password: hashedPassword,
       },
     });
 
+    return NextResponse.json({
+      message: "Senha criada com sucesso",
+      email,
+      password: plainPassword,
+    });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Erro no login" },
-      { status: 500 }
-    );
+    console.error(error);
+
+    return NextResponse.json({
+      error: "Erro interno",
+    });
   }
 }

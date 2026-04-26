@@ -1,14 +1,5 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-function serializeClient(client: any) {
-  return {
-    ...client,
-    storageUsedBytes:
-      typeof client.storageUsedBytes === "bigint"
-        ? client.storageUsedBytes.toString()
-        : client.storageUsedBytes ?? "0",
-  };
-}
 
 export async function GET() {
   try {
@@ -16,17 +7,10 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const safeClients = clients.map(serializeClient);
-
-    return Response.json(safeClients);
+    return NextResponse.json(clients);
   } catch (error) {
-    console.error("ERRO GET CLIENTS:", error);
-
-    return Response.json(
-      {
-        error: "Erro ao buscar clientes",
-        details: error instanceof Error ? error.message : String(error),
-      },
+    return NextResponse.json(
+      { error: "Erro ao buscar clientes" },
       { status: 500 }
     );
   }
@@ -38,26 +22,24 @@ export async function POST(req: Request) {
 
     const client = await prisma.client.create({
       data: {
-        name: String(body.name || "").trim(),
-        email: body.email ? String(body.email).trim() : null,
-        plan: body.plan ? String(body.plan) : "basic",
+        name: body.name,
+        email: body.email || null,
+        plan: body.plan || "basic",
         monthlyValue: Number(body.monthlyValue) || 30,
         includedGb: Number(body.includedGb) || 5,
         extraPricePerGb: Number(body.extraPricePerGb) || 2,
         status: "unknown",
-        storageUsedBytes: BigInt(0),
+        machineName: body.machineName || null,
+        backupName: body.backupName || null,
       },
     });
 
-    return Response.json(serializeClient(client));
+    return NextResponse.json(client);
   } catch (error) {
-    console.error("ERRO POST CLIENT:", error);
+    console.error(error);
 
-    return Response.json(
-      {
-        error: "Erro ao criar cliente",
-        details: error instanceof Error ? error.message : String(error),
-      },
+    return NextResponse.json(
+      { error: "Erro ao criar cliente" },
       { status: 500 }
     );
   }

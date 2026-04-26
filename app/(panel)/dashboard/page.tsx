@@ -15,7 +15,6 @@ type ClientRow = {
   backupName: string | null;
   lastBackupAt: Date | null;
   lastBackupError: string | null;
-  storageUsedBytes: bigint;
   createdAt: Date;
 };
 
@@ -35,14 +34,14 @@ function getStatus(client: ClientRow) {
 }
 
 export default async function DashboardPage() {
-  const clients = (await prisma.client.findMany({
+  const clients = await prisma.client.findMany({
     orderBy: { createdAt: "desc" },
-  })) as ClientRow[];
+  });
 
   const total = clients.length;
-  const active = clients.filter((c) => getStatus(c) === "ok").length;
-  const offline = clients.filter((c) => getStatus(c) === "offline").length;
-  const error = clients.filter((c) => getStatus(c) === "error").length;
+  const active = clients.filter((c) => getStatus(c as ClientRow) === "ok").length;
+  const offline = clients.filter((c) => getStatus(c as ClientRow) === "offline").length;
+  const error = clients.filter((c) => getStatus(c as ClientRow) === "error").length;
 
   const mrr = clients.reduce((acc, client) => {
     return acc + Number(client.monthlyValue || 0);

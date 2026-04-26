@@ -17,10 +17,17 @@ function getStatus(client: any) {
 }
 
 export default async function ClientDashboardPage() {
+  // 🔒 TUDO AQUI DENTRO
   const cookieStore = await cookies();
+  const role = cookieStore.get("user_role")?.value;
   const clientId = cookieStore.get("client_id")?.value;
 
-  // 🔒 protege rota
+  // 🔒 protege role
+  if (role !== "client") {
+    redirect("/login");
+  }
+
+  // 🔒 protege sessão
   if (!clientId) {
     redirect("/client/login");
   }
@@ -51,7 +58,7 @@ export default async function ClientDashboardPage() {
             : "Sem backup"}
         </p>
 
-        {/* 🚪 BOTÃO DE LOGOUT */}
+        {/* 🚪 LOGOUT */}
         <form action="/api/client/logout" method="POST">
           <button className="mt-4 w-full rounded-lg bg-red-600 py-2 font-semibold text-white hover:bg-red-700">
             Sair

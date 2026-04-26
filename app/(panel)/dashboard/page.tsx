@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const revalidate = 0;
 
@@ -34,6 +36,14 @@ function getStatus(client: ClientRow) {
 }
 
 export default async function DashboardPage() {
+  // 🔒 PROTEÇÃO AQUI DENTRO
+  const cookieStore = await cookies();
+  const role = cookieStore.get("user_role")?.value;
+
+  if (role !== "admin") {
+    redirect("/login");
+  }
+
   const clients = await prisma.client.findMany({
     orderBy: { createdAt: "desc" },
   });

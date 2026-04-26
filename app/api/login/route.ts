@@ -6,20 +6,18 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
-    // 🔍 busca cliente
-    const client = await prisma.client.findUnique({
+    const user = await prisma.client.findUnique({
       where: { email },
     });
 
-    if (!client || !client.password) {
+    if (!user || !user.password) {
       return NextResponse.json(
         { error: "Credenciais inválidas" },
         { status: 401 }
       );
     }
 
-    // 🔐 compara senha
-    const isValid = await bcrypt.compare(password, client.password);
+    const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
       return NextResponse.json(
@@ -28,14 +26,27 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({
-      message: "Login OK",
-      client: {
-        id: client.id,
-        name: client.name,
-        email: client.email,
-      },
+    // 🔥 DEFINE TIPO
+    const role = email === "admin@cloudatex.com" ? "admin" : "client";
+
+    const response = NextResponse.json({
+      role,
     });
+
+    // 🔐 cookie
+    response.cookies.set("user_id", user.id, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+    });
+
+    response.cookies.set("user_role", role, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+    });
+
+    return response;
 
   } catch (error) {
     return NextResponse.json(

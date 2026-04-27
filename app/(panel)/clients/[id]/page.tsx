@@ -58,6 +58,9 @@ export default function ClientPage() {
   const [includedGb, setIncludedGb] = useState("5");
   const [extraPricePerGb, setExtraPricePerGb] = useState("2");
   const [status, setStatus] = useState("unknown");
+  // PIX
+const [pixCopyPaste, setPixCopyPaste] = useState<string | null>(null);
+const [loadingPix, setLoadingPix] = useState(false);
 
   useEffect(() => {
     async function loadClient() {
@@ -156,6 +159,39 @@ export default function ClientPage() {
     }
   }
 
+  // GERAR PIX (ASAAS)
+async function handleGeneratePix() {
+  setLoadingPix(true);
+
+  try {
+    const res = await fetch("/api/asaas/create-payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        clientId: id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("ERRO PIX:", data);
+      alert("Erro ao gerar cobrança");
+      return;
+    }
+
+    setPixCopyPaste(data.client.pixCopyPaste);
+    alert("Cobrança Pix gerada!");
+  } catch (error) {
+    console.error("ERRO FETCH PIX:", error);
+    alert("Erro ao gerar cobrança");
+  } finally {
+    setLoadingPix(false);
+  }
+}
+
   if (loading) {
     return <main className="p-8 text-white">Carregando...</main>;
   }
@@ -224,6 +260,24 @@ export default function ClientPage() {
 
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
           <h2 className="text-lg font-semibold text-white">Cobrança</h2>
+
+          <div className="mt-4">
+  <button
+    type="button"
+    onClick={handleGeneratePix}
+    disabled={loadingPix}
+    className="w-full rounded-xl bg-green-600 px-5 py-3 font-medium text-white hover:bg-green-700 disabled:opacity-50"
+  >
+    {loadingPix ? "Gerando..." : "Gerar cobrança Pix"}
+  </button>
+</div>
+
+{pixCopyPaste && (
+  <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-300 break-all">
+    <p className="mb-2 text-zinc-400">Pix copia e cola:</p>
+    {pixCopyPaste}
+  </div>
+)}
 
           <div>
             <label className="block text-sm text-zinc-400 mb-2">
@@ -307,6 +361,7 @@ export default function ClientPage() {
             className="rounded-xl bg-red-600 px-5 py-3 font-medium text-white hover:bg-red-700"
           >
             Excluir cliente
+            
           </button>
         </div>
       </form>

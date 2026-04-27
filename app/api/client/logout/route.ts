@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+function logout(req: Request) {
   const url = new URL("/client/login", req.url);
 
   const response = NextResponse.redirect(url);
@@ -12,4 +12,12 @@ export async function POST(req: Request) {
   });
 
   return response;
+}
+
+export async function POST(req: Request) {
+  return logout(req);
+}
+
+export async function GET(req: Request) {
+  return logout(req);
 }

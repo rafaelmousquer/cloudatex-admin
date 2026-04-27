@@ -1,188 +1,112 @@
-"use client";
+import { prisma } from "@/lib/prisma";
 
-import { useState } from "react";
+export const revalidate = 0;
 
-export default function NewClientPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("123456");
-  const [backupName, setBackupName] = useState("");
-  const [plan, setPlan] = useState("basic");
-  const [monthlyValue, setMonthlyValue] = useState("30");
-  const [includedGb, setIncludedGb] = useState("5");
-  const [extraPricePerGb, setExtraPricePerGb] = useState("2");
-  const [loading, setLoading] = useState(false);
+function formatStatus(status: string) {
+  if (status === "ok") return "Ativo";
+  if (status === "error") return "Erro";
+  if (status === "warning") return "Atenção";
+  if (status === "offline") return "Offline";
+  return "Sem backup";
+}
 
-  function generateBackupName(value: string) {
-    return value
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  }
+function bytesToGb(bytes: bigint | number | null | undefined) {
+  if (!bytes) return 0;
+  return Number(bytes) / 1024 / 1024 / 1024;
+}
 
-  function handleNameChange(value: string) {
-    setName(value);
-
-    if (!backupName) {
-      setBackupName(generateBackupName(value));
-    }
-  }
-
-  async function createClient() {
-    setLoading(true);
-
-    const res = await fetch("/api/clients", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        backupName,
-        plan,
-        monthlyValue,
-        includedGb,
-        extraPricePerGb,
-      }),
-    });
-
-    const data = await res.json();
-
-    setLoading(false);
-
-    if (!res.ok) {
-      alert(data.error || "Erro ao criar cliente");
-      return;
-    }
-
-    alert("Cliente criado com sucesso!");
-    window.location.href = "/dashboard";
-  }
+export default async function ClientsPage() {
+  const clients = await prisma.client.findMany({
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
-    <div className="min-h-screen bg-[#050816] text-white">
-      <div className="mx-auto max-w-2xl px-6 py-10">
-        <div className="mb-6">
-          <a href="/dashboard" className="text-sm text-blue-300 hover:text-blue-200">
-            ← Voltar ao dashboard
-          </a>
-
-          <h1 className="mt-4 text-3xl font-bold">Novo cliente</h1>
-          <p className="mt-2 text-sm text-zinc-400">
-            Crie o acesso do cliente e defina o nome que será usado no Duplicati.
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Clientes</h1>
+          <p className="mt-1 text-sm text-zinc-400">
+            Lista de clientes cadastrados na Cloudatex.
           </p>
         </div>
 
-        <div className="space-y-5 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
-          <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Nome do cliente
-            </label>
-            <input
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-500"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="Mercado Teste"
-            />
+        <a
+          href="/clients/new"
+          className="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500"
+        >
+          + Novo Cliente
+        </a>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-zinc-800 text-zinc-300">
+            <tr>
+              <th className="px-4 py-4">Nome</th>
+              <th className="px-4 py-4">Email</th>
+              <th className="px-4 py-4">Plano</th>
+              <th className="px-4 py-4">Mensalidade</th>
+              <th className="px-4 py-4">Uso</th>
+              <th className="px-4 py-4">Pagamento</th>
+              <th className="px-4 py-4">Status</th>
+              <th className="px-4 py-4">Último backup</th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-zinc-800">
+            {clients.map((client) => {
+              const usedGb = bytesToGb(client.storageUsedBytes);
+
+              return (
+                <tr key={client.id} className="hover:bg-zinc-800/60">
+                  <td className="px-4 py-4 font-medium text-white">
+                    {client.name}
+                  </td>
+
+                  <td className="px-4 py-4 text-zinc-400">
+                    {client.email || "-"}
+                  </td>
+
+                  <td className="px-4 py-4 capitalize text-blue-300">
+                    {client.plan}
+                  </td>
+
+                  <td className="px-4 py-4 text-zinc-300">
+                    R$ {Number(client.monthlyValue).toFixed(2)}
+                  </td>
+
+                  <td className="px-4 py-4 text-zinc-300">
+                    {usedGb.toFixed(2)} GB
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <span className="rounded-lg bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
+                      {client.paymentStatus || "pending"}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <span className="rounded-lg bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
+                      {formatStatus(client.status)}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-4 text-zinc-400">
+                    {client.lastBackupAt
+                      ? new Date(client.lastBackupAt).toLocaleString("pt-BR")
+                      : "-"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {clients.length === 0 && (
+          <div className="p-8 text-center text-zinc-400">
+            Nenhum cliente cadastrado.
           </div>
-
-          <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Email de login
-            </label>
-            <input
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="cliente@email.com"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Senha inicial
-            </label>
-            <input
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="123456"
-            />
-          </div>
-
-          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4">
-            <label className="mb-2 block text-sm font-semibold text-blue-200">
-              Backup name do Duplicati
-            </label>
-            <input
-              className="w-full rounded-xl border border-blue-500/20 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-400"
-              value={backupName}
-              onChange={(e) => setBackupName(e.target.value)}
-              placeholder="mercado-teste"
-            />
-
-            <p className="mt-2 text-xs text-blue-200/70">
-              Use exatamente esse nome no Duplicati. O report precisa enviar
-              backup-name = <strong>{backupName || "nome-do-backup"}</strong>
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm text-zinc-300">Plano</label>
-              <input
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-500"
-                value={plan}
-                onChange={(e) => setPlan(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-zinc-300">
-                Valor mensal
-              </label>
-              <input
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-500"
-                value={monthlyValue}
-                onChange={(e) => setMonthlyValue(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-zinc-300">
-                GB incluídos
-              </label>
-              <input
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-500"
-                value={includedGb}
-                onChange={(e) => setIncludedGb(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-zinc-300">
-                Preço por GB extra
-              </label>
-              <input
-                className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-blue-500"
-                value={extraPricePerGb}
-                onChange={(e) => setExtraPricePerGb(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={createClient}
-            disabled={loading}
-            className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
-          >
-            {loading ? "Criando..." : "Criar cliente"}
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

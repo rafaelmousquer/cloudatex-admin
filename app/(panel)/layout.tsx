@@ -1,12 +1,23 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 
-export default function PanelLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function PanelLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  function linkClass(path: string) {
+    const isActive = pathname === path;
+
+    return `block rounded-xl px-4 py-3 text-sm font-medium transition ${
+      isActive
+        ? "bg-zinc-800 text-white"
+        : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+    }`;
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="flex min-h-screen">
@@ -17,24 +28,15 @@ export default function PanelLayout({
           </div>
 
           <nav className="flex-1 p-4 space-y-2">
-            <Link
-              href="/dashboard"
-              className="block rounded-xl px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
-            >
+            <Link href="/dashboard" className={linkClass("/dashboard")}>
               Dashboard
             </Link>
 
-            <Link
-              href="/clients"
-              className="block rounded-xl px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
-            >
+            <Link href="/clients" className={linkClass("/clients")}>
               Clientes
             </Link>
 
-            <Link
-              href="/clients/new"
-              className="block rounded-xl px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
-            >
+            <Link href="/clients/new" className={linkClass("/clients/new")}>
               Novo Cliente
             </Link>
           </nav>

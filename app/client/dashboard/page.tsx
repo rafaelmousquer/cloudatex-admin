@@ -164,6 +164,44 @@ export default async function ClientDashboardPage() {
             )}
           </div>
         </div>
+        
+        {/* PIX PAYMENT */}
+{client.pixCopyPaste && (
+  <div className="rounded-3xl border border-green-500/30 bg-green-500/10 p-6 space-y-4">
+    
+    <h3 className="text-lg font-semibold text-green-300">
+      Pagamento via Pix
+    </h3>
+
+    <p className="text-sm text-green-200/70">
+      Utilize o QR Code ou copie o código abaixo para realizar o pagamento.
+    </p>
+
+    {/* QR CODE */}
+    {client.pixQrCode && (
+      <div className="flex justify-center">
+        <img
+          src={`data:image/png;base64,${client.pixQrCode}`}
+          alt="QR Code Pix"
+          className="w-40 h-40 rounded-lg bg-white p-2"
+        />
+      </div>
+    )}
+
+    {/* COPY PASTE */}
+    <div className="rounded-xl bg-black/40 p-3 text-xs break-all text-green-100">
+      {client.pixCopyPaste}
+    </div>
+
+    {/* COPY BUTTON */}
+    <button
+      onClick={() => navigator.clipboard.writeText(client.pixCopyPaste!)}
+      className="w-full rounded-xl bg-green-600 py-2 font-medium text-white hover:bg-green-700"
+    >
+      Copiar código Pix
+    </button>
+  </div>
+)}
 
         {/* ERROR */}
         {client.lastBackupError && (

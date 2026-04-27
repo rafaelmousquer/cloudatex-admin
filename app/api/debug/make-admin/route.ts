@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function GET() {
-  const admin = await prisma.client.update({
+  const updated = await prisma.client.updateMany({
     where: {
       email: "admin@cloudatex.com",
     },
@@ -11,9 +11,5 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({
-    message: "Admin atualizado com sucesso",
-    email: admin.email,
-    role: admin.role,
-  });
+  return NextResponse.json(updated);
 }

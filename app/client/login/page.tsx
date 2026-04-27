@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 export default function ClientLoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("rafael@teste.com");
-  const [password, setPassword] = useState("123456");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin() {
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
     setLoading(true);
 
     const res = await fetch("/api/client/login", {
@@ -21,33 +22,36 @@ export default function ClientLoginPage() {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
-    setLoading(false);
-
-    if (!res.ok) {
-      alert(data.error || "Erro no login");
-      return;
+    if (res.ok) {
+      router.push("/client/dashboard");
+    } else {
+      alert("Login inválido");
     }
 
-    router.push("/client/dashboard");
+    setLoading(false);
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg">
-        <h1 className="mb-2 text-center text-2xl font-bold text-black">
-          Área do Cliente
-        </h1>
+    <main className="min-h-screen bg-[#050816] flex items-center justify-center px-6">
+      <div className="w-full max-w-md space-y-6">
 
-        <p className="mb-6 text-center text-sm text-gray-500">
-          Acesse o painel do seu backup
-        </p>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white">
+            Acessar conta
+          </h1>
+          <p className="text-zinc-400 mt-1">
+            Entre para visualizar seu backup
+          </p>
+        </div>
 
-        <div className="flex flex-col gap-3">
+        <form
+          onSubmit={handleLogin}
+          className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 space-y-4"
+        >
           <input
             type="email"
             placeholder="Email"
-            className="rounded-lg border px-3 py-2 text-black"
+            className="w-full rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-white outline-none focus:border-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -55,20 +59,21 @@ export default function ClientLoginPage() {
           <input
             type="password"
             placeholder="Senha"
-            className="rounded-lg border px-3 py-2 text-black"
+            className="w-full rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-white outline-none focus:border-blue-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <button
-            onClick={handleLogin}
+            type="submit"
             disabled={loading}
-            className="rounded-lg bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>
-        </div>
+        </form>
+
       </div>
-    </div>
+    </main>
   );
 }

@@ -4,6 +4,14 @@ import { redirect } from "next/navigation";
 
 export const revalidate = 0;
 
+function formatDate(date: Date | string | null | undefined) {
+  if (!date) return "Sem backup";
+
+  return new Date(date).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
 function bytesToGb(bytes: bigint | number | null | undefined) {
   if (!bytes) return 0;
   return Number(bytes) / 1024 / 1024 / 1024;
@@ -31,14 +39,6 @@ function statusLabel(status: string) {
   return "Desconhecido";
 }
 
-function paymentLabel(status: string | null | undefined) {
-  if (status === "paid") return "Em dia";
-  if (status === "pending") return "Pendente";
-  if (status === "overdue") return "Atrasado";
-  if (status === "cancelled") return "Cancelado";
-  return "Pendente";
-}
-
 function statusClass(status: string) {
   if (status === "ok")
     return "bg-emerald-500/10 text-emerald-300 border-emerald-500/30";
@@ -50,19 +50,6 @@ function statusClass(status: string) {
     return "bg-yellow-500/10 text-yellow-300 border-yellow-500/30";
 
   return "bg-zinc-500/10 text-zinc-300 border-zinc-500/30";
-}
-
-function paymentClass(status: string | null | undefined) {
-  if (status === "paid")
-    return "bg-emerald-500/10 text-emerald-300 border-emerald-500/30";
-
-  if (status === "overdue")
-    return "bg-red-500/10 text-red-300 border-red-500/30";
-
-  if (status === "cancelled")
-    return "bg-zinc-500/10 text-zinc-300 border-zinc-500/30";
-
-  return "bg-yellow-500/10 text-yellow-300 border-yellow-500/30";
 }
 
 export default async function ClientDashboardPage() {
@@ -89,9 +76,8 @@ export default async function ClientDashboardPage() {
     includedGb > 0 ? Math.min((usedGb / includedGb) * 100, 100) : 0;
 
   const extraGb = Math.max(usedGb - includedGb, 0);
-  const estimatedExtraCost = extraGb * Number(client.extraPricePerGb || 0);
-
-  const paymentStatus = client.paymentStatus || "pending";
+  const estimatedExtraCost =
+    extraGb * Number(client.extraPricePerGb || 0);
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
@@ -100,13 +86,13 @@ export default async function ClientDashboardPage() {
           <h1 className="text-2xl font-bold">Olá, {client.name}</h1>
 
           <p className="mt-2 text-sm text-zinc-400">
-            Aqui está o status do seu backup e da sua mensalidade
+            Aqui está o status do seu backup
           </p>
         </header>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400">Status do backup</span>
+            <span className="text-zinc-400">Status</span>
 
             <span
               className={`rounded-full border px-3 py-1 text-sm font-semibold ${statusClass(
@@ -131,9 +117,7 @@ export default async function ClientDashboardPage() {
             <span className="text-zinc-400">Último backup</span>
 
             <span>
-              {client.lastBackupAt
-                ? new Date(client.lastBackupAt).toLocaleString("pt-BR")
-                : "Sem backup"}
+              {formatDate(client.lastBackupAt)}
             </span>
           </div>
         </div>
@@ -141,9 +125,7 @@ export default async function ClientDashboardPage() {
         <div className="rounded-3xl border border-blue-500/20 bg-blue-500/10 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-blue-200">
-                Uso de armazenamento
-              </h3>
+              <h3 className="font-semibold text-blue-200">Uso de armazenamento</h3>
               <p className="mt-1 text-sm text-blue-200/60">
                 Espaço usado no backup em nuvem
               </p>
@@ -178,64 +160,6 @@ export default async function ClientDashboardPage() {
               <span>Dentro do plano</span>
             )}
           </div>
-        </div>
-
-        <div className="rounded-3xl border border-green-500/20 bg-green-500/10 p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="font-semibold text-green-200">Pagamento</h3>
-              <p className="mt-1 text-sm text-green-200/60">
-                Status da sua mensalidade
-              </p>
-            </div>
-
-            <div className="text-right">
-              <span
-                className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${paymentClass(
-                  paymentStatus
-                )}`}
-              >
-                {paymentLabel(paymentStatus)}
-              </span>
-
-              <p className="mt-2 text-sm text-green-200/60">
-                {client.paymentDueDate
-                  ? `Vence em ${new Date(
-                      client.paymentDueDate
-                    ).toLocaleDateString("pt-BR")}`
-                  : "Sem vencimento definido"}
-              </p>
-            </div>
-          </div>
-
-          {paymentStatus !== "paid" && client.paymentUrl && (
-            <a
-              href={client.paymentUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-5 block w-full rounded-xl bg-green-600 py-3 text-center font-semibold text-white transition hover:bg-green-500"
-            >
-              Pagar com Pix
-            </a>
-          )}
-
-          {paymentStatus !== "paid" && client.pixCopyPaste && (
-            <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-4">
-              <p className="mb-2 text-xs font-semibold text-green-200">
-                Pix copia e cola
-              </p>
-
-              <p className="break-all text-xs text-green-100/80">
-                {client.pixCopyPaste}
-              </p>
-            </div>
-          )}
-
-          {paymentStatus === "paid" && (
-            <p className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
-              Sua mensalidade está em dia. Obrigado pelo pagamento!
-            </p>
-          )}
         </div>
 
         {client.lastBackupError && (

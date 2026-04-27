@@ -1,0 +1,33 @@
+[33m9e849e4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m reset admin login clean version
+[33md27b6da[m remove bcrypt (fix vercel build)
+[33mc4ffd20[m fix admin login state
+[33m1aeb6a5[m fix admin login bcrypt
+[33m9845887[m fix admin role
+[33m999d6b6[m o que você mudou
+[33m220b0ba[m update login UI
+[33m5081895[m feat: pix no painel do cliente
+[33mc79d284[m update
+[33m128e28f[m fix: logout client dashboard
+[33ma17f91a[m fix: client logout supports get and post
+[33mff6e789[m fix: client logout redirect
+[33m45473f6[m fix: timezone clients list
+[33mbf477e5[m fix: timezone dashboard
+[33m2b52613[m feat: add payment status to client dashboard
+[33mb781015[m feat: add payment status to client dashboard
+[33m90d7462[m feat: create client page
+[33m30be770[m feat: update storage usage from duplicati report
+[33m5adbf88[m style: premium admin dashboard
+[33m5c21476[m feat: protect admin dashboard
+[33mcee7502[m fix: protect client dashboard
+[33m18dfb41[m feat: logout funcionando
+[33ma050f7e[m fix: build funcionando
+[33m886cf8d[m fix: dashboard build ok
+[33md85031c[m fix: package.json corrigido
+[33m509575b[m fix: comma in package.json
+[33m6b2c934[m fix: prisma generate on build
+[33mecdfb70[m force dynamic dashboard and clients
+[33m12603e9[m fix dashboard
+[33m3e990ba[m fix bigint manually
+[33m590e72c[m show real create client error
+[33m4d900af[m fix neon and client api
+[33mdc627a5[m primeiro deploy

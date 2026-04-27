@@ -1,15 +1,58 @@
-// /api/debug/reset-admin
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { NextResponse } from "next/server";
+"use client";
 
-export async function GET() {
-  const hash = await bcrypt.hash("123456", 10);
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-  await prisma.client.updateMany({
-    where: { email: "admin@cloudatex.com" },
-    data: { password: hash },
-  });
+export default function Login() {
+  const router = useRouter();
 
-  return NextResponse.json({ ok: true });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  async function handleLogin(e: any) {
+    e.preventDefault();
+
+    const res = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      router.push("/dashboard");
+    } else {
+      alert(data.error);
+    }
+  }
+
+  return (
+    <div style={{ padding: 40 }}>
+      <h2>Admin Login</h2>
+
+      <form onSubmit={handleLogin}>
+        <input
+          placeholder="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <br /><br />
+
+        <input
+          type="password"
+          placeholder="senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <br /><br />
+
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
+  );
 }

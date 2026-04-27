@@ -8,9 +8,11 @@ export default function AdminLoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
 
     const res = await fetch("/api/admin/login", {
       method: "POST",
@@ -20,11 +22,16 @@ export default function AdminLoginPage() {
       body: JSON.stringify({ email, password }),
     });
 
+    const data = await res.json();
+    console.log("LOGIN RESPONSE:", data);
+
     if (res.ok) {
       router.push("/dashboard");
     } else {
-      alert("Login inválido");
+      alert(data.error || "Login inválido");
     }
+
+    setLoading(false);
   }
 
   return (
@@ -45,16 +52,24 @@ export default function AdminLoginPage() {
             type="email"
             placeholder="Email"
             className="w-full rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-white"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
             type="password"
             placeholder="Senha"
             className="w-full rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-white"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white hover:bg-blue-700">
-            Entrar
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-blue-600 py-3 font-medium text-white hover:bg-blue-700"
+          >
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
 

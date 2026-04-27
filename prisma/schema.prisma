@@ -21,7 +21,6 @@ model Client {
   includedGb        Float    @default(5)
   extraPricePerGb   Float    @default(2)
 
-  // 🔥 USO DE ARMAZENAMENTO
   storageUsedBytes  BigInt   @default(0)
 
   status            String   @default("unknown")
@@ -31,6 +30,15 @@ model Client {
 
   lastBackupAt      DateTime?
   lastBackupError   String?
+
+  // 💰 ASAAS / PAGAMENTO
+  asaasCustomerId   String?
+  asaasPaymentId    String?
+  paymentStatus     String   @default("pending") // pending, paid, overdue, cancelled
+  paymentDueDate    DateTime?
+  paymentUrl        String?
+  pixQrCode         String?
+  pixCopyPaste      String?
 
   createdAt         DateTime @default(now())
 }

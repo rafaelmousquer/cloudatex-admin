@@ -2,6 +2,14 @@ import { prisma } from "@/lib/prisma";
 
 export const revalidate = 0;
 
+function formatDate(date: Date | string | null | undefined) {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
 function formatStatus(status: string) {
   if (status === "ok") return "Ativo";
   if (status === "error") return "Erro";
@@ -92,9 +100,7 @@ export default async function ClientsPage() {
                   </td>
 
                   <td className="px-4 py-4 text-zinc-400">
-                    {client.lastBackupAt
-                      ? new Date(client.lastBackupAt).toLocaleString("pt-BR")
-                      : "-"}
+                    {formatDate(client.lastBackupAt)}
                   </td>
                 </tr>
               );

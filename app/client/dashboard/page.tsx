@@ -82,14 +82,16 @@ export default async function ClientDashboardPage() {
   return (
     <div className="min-h-screen bg-[#050816] text-white">
       <div className="mx-auto max-w-3xl space-y-6 px-6 py-10">
+        
+        {/* HEADER */}
         <header className="rounded-3xl border border-white/10 bg-white/[0.04] p-6">
           <h1 className="text-2xl font-bold">Olá, {client.name}</h1>
-
           <p className="mt-2 text-sm text-zinc-400">
             Aqui está o status do seu backup
           </p>
         </header>
 
+        {/* STATUS */}
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-zinc-400">Status</span>
@@ -116,16 +118,17 @@ export default async function ClientDashboardPage() {
           <div className="flex items-center justify-between">
             <span className="text-zinc-400">Último backup</span>
 
-            <span>
-              {formatDate(client.lastBackupAt)}
-            </span>
+            <span>{formatDate(client.lastBackupAt)}</span>
           </div>
         </div>
 
+        {/* STORAGE */}
         <div className="rounded-3xl border border-blue-500/20 bg-blue-500/10 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-blue-200">Uso de armazenamento</h3>
+              <h3 className="font-semibold text-blue-200">
+                Uso de armazenamento
+              </h3>
               <p className="mt-1 text-sm text-blue-200/60">
                 Espaço usado no backup em nuvem
               </p>
@@ -162,6 +165,7 @@ export default async function ClientDashboardPage() {
           </div>
         </div>
 
+        {/* ERROR */}
         {client.lastBackupError && (
           <div className="rounded-3xl border border-red-500/30 bg-red-500/10 p-6">
             <h3 className="font-semibold text-red-300">
@@ -175,11 +179,14 @@ export default async function ClientDashboardPage() {
           </div>
         )}
 
-        <form action="/api/client/logout" method="POST">
-          <button className="w-full rounded-xl bg-red-600 py-3 font-semibold text-white hover:bg-red-700">
-            Sair
-          </button>
-        </form>
+        {/* LOGOUT */}
+        <a
+          href="/api/client/logout"
+          className="block w-full rounded-xl bg-red-600 py-3 text-center font-semibold text-white hover:bg-red-700"
+        >
+          Sair
+        </a>
+
       </div>
     </div>
   );

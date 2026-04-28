@@ -97,11 +97,13 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          <form action="/api/admin/logout" method="POST">
-            <button className="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-200 transition hover:bg-red-500/20">
-              Sair
-            </button>
-          </form>
+          {/* 🔥 LOGOUT CORRIGIDO */}
+          <a
+            href="/api/admin/logout"
+            className="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-200 transition hover:bg-red-500/20"
+          >
+            Sair
+          </a>
         </header>
 
         <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-5">

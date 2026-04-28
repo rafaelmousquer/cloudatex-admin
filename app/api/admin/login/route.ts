@@ -4,51 +4,42 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const email = body.email;
+    const password = body.password;
 
     const user = await prisma.client.findUnique({
       where: { email },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Usuário não encontrado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 401 });
     }
 
     if (user.role !== "admin") {
-      return NextResponse.json(
-        { error: "Não é admin" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Não é admin" }, { status: 401 });
     }
 
-    // 🔒 COMPARAÇÃO COM BCRYPT
-    const valid = await bcrypt.compare(password, user.password || "");
+    const isValid = await bcrypt.compare(password, user.password || "");
 
-    if (!valid) {
-      return NextResponse.json(
-        { error: "Senha inválida" },
-        { status: 401 }
-      );
+    if (!isValid) {
+      return NextResponse.json({ error: "Senha inválida" }, { status: 401 });
     }
 
-    const res = NextResponse.json({ ok: true });
+    const response = NextResponse.json({ ok: true });
 
-    res.cookies.set("admin_auth", "true", {
+    response.cookies.set("admin_auth", "true", {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
     });
 
-    return res;
+    return response;
 
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
 
     return NextResponse.json(
       { error: "Erro interno" },

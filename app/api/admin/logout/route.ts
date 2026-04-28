@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  const response = NextResponse.redirect(new URL("/admin/login", req.url));
+  const res = NextResponse.redirect(new URL("/admin/login", req.url));
 
-  response.cookies.set("admin_auth", "", {
+  res.cookies.set("admin_auth", "", {
     httpOnly: true,
     path: "/",
     expires: new Date(0),
   });
 
-  return response;
+  return res;
 }
